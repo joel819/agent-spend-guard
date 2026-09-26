@@ -1,0 +1,31 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false   # runs in demo mode without a .env
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      - guard-data:/app/data   # wallet, transactions and audit log survive restarts
+    restart: unless-stopped
+
+  # Runs the CLI demo once on `docker compose up` and exits: all three outcomes in the logs.
+  # Interactive version (you answer the confirmation prompt):
+  #   docker compose run --rm demo python -m cli demo
+  demo:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      - guard-data:/app/data
+    command: ["python", "-m", "cli", "demo", "--yes", "--tamper"]
+    restart: "no"
+
+volumes:
+  guard-data:

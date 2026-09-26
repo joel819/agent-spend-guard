@@ -1,0 +1,16 @@
+# Spending policy enforced on every transaction an agent proposes.
+# Amounts are strings to avoid float rounding. Changes take effect on restart;
+# every decision records the policy fingerprint it was made under.
+
+[limits]
+currency = "EUR"
+per_transaction_cap = "50.00"   # above this: a human must confirm
+daily_cap = "200.00"            # hard ceiling: executed + pending, per calendar day; never overridable
+timezone = "UTC"                # which midnight resets the daily cap (IANA name, e.g. "America/New_York")
+
+[confirmation]
+timeout_minutes = 15            # pending confirmations expire (and release their hold) after this
+
+[categories]
+blocked = ["gambling", "crypto_exchange", "gift_cards"]   # always rejected
+always_confirm = ["travel", "hardware"]                   # need a human even under the per-transaction cap
