@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Agent Spend Guard</title>
+<style>
+  :root {
+    --paper: #fff4dc; --card: #fffdf7; --ink: #1c1b33; --muted: #6a6780;
+    --orange: #ff6a3d; --mint: #36d6a0; --lemon: #ffd43b; --lilac: #c3b1ff; --sky: #8fd3ff; --rose: #ff9aa2;
+    --shadow: 4px 4px 0 var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font: 15px/1.55 ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+         background-color: var(--paper); background-image: radial-gradient(var(--ink) 0.8px, transparent 0.8px);
+         background-size: 22px 22px; background-blend-mode: soft-light; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 16px 48px; display: grid;
+          grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  header { grid-column: 1 / -1; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .logo { width: 46px; height: 46px; display: grid; place-items: center; font-size: 24px; background: var(--lemon);
+          border: 3px solid var(--ink); border-radius: 14px; box-shadow: var(--shadow); transform: rotate(-6deg); }
+  h1 { font: 800 30px/1 Georgia, "Times New Roman", serif; margin: 0; letter-spacing: -.5px; }
+  h1 span { background: linear-gradient(transparent 58%, var(--mint) 58%); padding: 0 4px; }
+  h2 { font: 800 13px/1 ui-rounded, system-ui, sans-serif; text-transform: uppercase; letter-spacing: .12em; margin: 0 0 12px; }
+  .badge { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 99px; background: var(--mint);
+           border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .badge.alt { background: var(--lilac); }
+  .meta { font-size: 12px; color: var(--muted); }
+  header > .meta { flex-basis: 100%; }
+  .panel { background: var(--card); border: 3px solid var(--ink); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); }
+  aside .panel + .panel, main .panel + .panel { margin-top: 22px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 600px) { .tiles { grid-template-columns: 1fr; } }
+  .tile { border: 2px solid var(--ink); border-radius: 14px; padding: 10px 14px; background: #fff; }
+  .tile .k { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .tile .v { font: 800 24px/1.2 Georgia, serif; }
+  .tile.hot { background: var(--lemon); }
+  .meter { margin-top: 16px; height: 30px; border: 3px solid var(--ink); border-radius: 99px; background: #fff;
+           overflow: hidden; position: relative; }
+  .meter i { display: block; height: 100%; background: var(--mint); border-right: 3px solid var(--ink);
+             transition: width .5s; }
+  .meter.warn i { background: var(--lemon); } .meter.full i { background: var(--rose); }
+  .meter b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; letter-spacing: .04em; }
+  .caps { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  label { display: block; font-size: 12px; font-weight: 800; margin: 10px 0 4px; letter-spacing: .04em; text-transform: uppercase; }
+  input, select { width: 100%; font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 12px; border: 3px solid var(--ink);
+                  background: #fff; color: var(--ink); outline: none; }
+  input:focus, select:focus { box-shadow: 0 0 0 4px var(--lemon); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button { font: inherit; font-weight: 700; cursor: pointer; border-radius: 12px; border: 2px solid var(--ink);
+           background: var(--card); color: var(--ink); padding: 6px 12px; box-shadow: 2px 2px 0 var(--ink);
+           transition: transform .08s, box-shadow .08s; }
+  button:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  button:active { transform: translate(2px, 2px); box-shadow: none; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: var(--orange); color: #fff; padding: 10px 22px; font-size: 16px; width: 100%; margin-top: 14px; }
+  .presets { background: var(--sky); }
+  .presets button { display: block; width: 100%; text-align: left; margin-bottom: 8px; font-size: 13px; }
+  .presets button:last-child { margin-bottom: 0; }
+  .verdict { margin-top: 14px; border: 3px solid var(--ink); border-radius: 14px; padding: 10px 14px; font-weight: 600; }
+  .verdict .t { font: 800 18px/1.2 Georgia, serif; margin-bottom: 2px; }
+  .verdict.executed { background: var(--mint); } .verdict.pending_confirmation { background: var(--lemon); }
+  .verdict.rejected, .verdict.failed, .verdict.denied { background: var(--rose); } .verdict.expired { background: var(--lilac); }
+  .chip { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 10px; border-radius: 99px; border: 2px solid var(--ink);
+          letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+  .chip.executed { background: var(--mint); } .chip.pending_confirmation { background: var(--lemon); }
+  .chip.rejected, .chip.failed, .chip.denied { background: var(--rose); } .chip.expired { background: var(--lilac); }
+  .pending { display: grid; gap: 12px; }
+  .pend { border: 2px solid var(--ink); border-radius: 14px; background: var(--lemon); padding: 10px 14px;
+          display: flex; gap: 12px; align-items: center; flex-wrap: wrap; box-shadow: 3px 3px 0 var(--ink); }
+  .pend .info { flex: 1; min-width: 200px; font-weight: 700; }
+  .pend .info small { display: block; font-weight: 500; }
+  .pend button.ok { background: var(--mint); } .pend button.no { background: var(--rose); }
+  .token { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .token input { max-width: 260px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; border: 2px solid var(--ink);
+          border-radius: 12px; overflow: hidden; background: #fff; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 2px solid var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  th { font-size: 11px; background: var(--lilac); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .scroll { overflow-x: auto; }
+  code { font: 12px ui-monospace, Menlo, monospace; }
+  .hash { color: var(--muted); }
+  .chain { margin-top: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-weight: 700; }
+  .chain .res { border: 2px solid var(--ink); border-radius: 99px; padding: 3px 12px; background: #fff; }
+  .chain .res.ok { background: var(--mint); } .chain .res.bad { background: var(--rose); }
+  .empty { padding: 16px 0; font-weight: 700; text-align: center; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true">🛡️</div>
+    <h1>Agent <span>spend guard</span></h1>
+    <span id="wallet" class="badge">loading…</span>
+    <span id="policy" class="badge alt"></span>
+    <span class="meta">Agents can only propose. Under the cap: paid. Over it: a human decides. Past the daily cap: never.</span>
+  </header>
+
+  <aside>
+    <div class="panel">
+      <h2>Propose a payment</h2>
+      <form id="form">
+        <div class="row">
+          <div><label for="agent">Agent</label><input id="agent" value="demo-agent" required></div>
+          <div><label for="amount">Amount</label><input id="amount" type="number" step="0.01" min="0.01" value="20.00" required></div>
+        </div>
+        <label for="merchant">Merchant</label><input id="merchant" value="Groq Cloud" required>
+        <div class="row">
+          <div><label for="category">Category</label><input id="category" value="software" required></div>
+          <div><label for="currency">Currency</label><input id="currency" value="EUR" maxlength="3" required></div>
+        </div>
+        <label for="description">What for</label><input id="description" value="API credits top-up" required>
+        <button class="primary" id="send">Propose payment</button>
+      </form>
+      <div id="verdict"></div>
+    </div>
+    <div class="panel presets">
+      <h2>Try these</h2>
+      <button data-p='["Groq Cloud","software","API credits top-up","20.00"]'>Groq Cloud · 20.00 (under the cap)</button>
+      <button data-p='["Namecheap","software","Domain renewal","12.99"]'>Namecheap · 12.99 (under the cap)</button>
+      <button data-p='["PyCon Europe","events","Conference ticket","149.00"]'>PyCon Europe · 149.00 (needs a human)</button>
+      <button data-p='["Lambda Cloud","compute","GPU hours","30.00"]'>Lambda Cloud · 30.00 (watch the daily cap)</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="panel">
+      <h2>Today</h2>
+      <div class="tiles">
+        <div class="tile"><div class="k">Wallet balance</div><div class="v" id="balance">–</div></div>
+        <div class="tile hot"><div class="k">Spent or held today</div><div class="v" id="spent">–</div></div>
+        <div class="tile"><div class="k">Left today</div><div class="v" id="left">–</div></div>
+      </div>
+      <div class="meter" id="meter"><i id="fill" style="width:0"></i><b id="meterTxt"></b></div>
+      <div class="caps" id="caps"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Waiting for a human</h2>
+      <div id="pending" class="pending"></div>
+      <div class="token">
+        <label for="tok" style="margin:0">Approver token</label>
+        <input id="tok" type="password" placeholder="X-Approver-Token" autocomplete="off">
+        <span class="meta" id="tokHint"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Transactions</h2>
+      <div class="scroll"><table><thead><tr><th>When (UTC)</th><th>Agent</th><th>Merchant</th><th class="num">Amount</th><th>Status</th><th>Rule</th></tr></thead>
+      <tbody id="tx"></tbody></table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Audit log (hash-chained)</h2>
+      <div class="scroll"><table><thead><tr><th>#</th><th>Event</th><th>Actor</th><th>Tx</th><th>Hash</th></tr></thead>
+      <tbody id="audit"></tbody></table></div>
+      <div class="chain"><button id="verify">Verify chain</button><span id="chainRes"></span></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LABEL = { executed: "approved & paid", pending_confirmation: "needs a human", rejected: "rejected", denied: "denied",
+                expired: "expired", failed: "failed" };
+let CUR = "EUR", HTTP_APPROVAL = false;
+const money = (v) => `${Number(v).toLocaleString("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${CUR}`;
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, opts);
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(typeof body.detail === "string" ? body.detail : (body.detail?.[0]?.msg || `Request failed (${r.status})`));
+  return body;
+}
+
+async function refresh() {
+  const [w, p, h, txs, aud] = await Promise.all([api("/wallet"), api("/policy"), api("/health"),
+    api("/transactions?limit=15"), api("/audit?limit=12")]);
+  CUR = w.currency; HTTP_APPROVAL = h.http_approval;
+  $("#wallet").textContent = `wallet: ${h.wallet}`;
+  $("#policy").textContent = `policy ${p.fingerprint.slice(0, 8)}`;
+  $("#balance").textContent = money(w.balance);
+  $("#spent").textContent = money(w.spent_or_held_today);
+  $("#left").textContent = money(w.remaining_today);
+  const used = Number(w.spent_or_held_today), cap = Number(p.daily_cap), pct = Math.min(100, (used / cap) * 100);
+  $("#fill").style.width = pct + "%";
+  $("#meter").className = "meter" + (pct >= 100 ? " full" : pct >= 80 ? " warn" : "");
+  $("#meterTxt").textContent = `DAILY CAP · ${money(used)} of ${money(cap)}`;
+  $("#caps").innerHTML = `<span class="chip executed">per payment ≤ ${money(p.per_transaction_cap)} → auto</span>
+    <span class="chip pending_confirmation">above it → human</span><span class="chip rejected">past ${money(cap)}/day → never</span>`
+    + (p.blocked_categories.length ? `<span class="chip denied">blocked: ${esc(p.blocked_categories.join(", "))}</span>` : "")
+    + (p.always_confirm_categories.length ? `<span class="chip pending_confirmation">always human: ${esc(p.always_confirm_categories.join(", "))}</span>` : "");
+  $("#tokHint").textContent = HTTP_APPROVAL ? "" : "HTTP approval is off (no APPROVER_TOKEN set). Use: python -m cli confirm <id>";
+
+  const pend = txs.filter((t) => t.status === "pending_confirmation");
+  $("#pending").innerHTML = pend.map((t) => `<div class="pend"><div class="info">${esc(t.merchant)} · ${money(t.amount)}
+      <small>${esc(t.description)} · proposed by ${esc(t.agent)} · id ${t.id.slice(0, 8)}</small></div>
+      <button class="ok" data-act="confirm" data-id="${t.id}">Approve</button><button class="no" data-act="deny" data-id="${t.id}">Deny</button></div>`).join("")
+    || '<div class="empty">Nothing is waiting. Propose something over the cap to see a hold appear here.</div>';
+  $("#tx").innerHTML = txs.map((t) => `<tr><td>${esc(t.created_at.slice(0, 16).replace("T", " "))}</td><td>${esc(t.agent)}</td><td>${esc(t.merchant)}</td>
+      <td class="num">${money(t.amount)}</td><td><span class="chip ${t.status}">${LABEL[t.status] || esc(t.status)}</span></td><td><code>${esc(t.rule)}</code></td></tr>`).join("");
+  $("#audit").innerHTML = aud.map((e) => `<tr><td>${e.seq}</td><td><code>${esc(e.event)}</code></td><td>${esc(e.actor)}</td>
+      <td><code>${esc((e.transaction_id || "").slice(0, 8))}</code></td><td class="hash"><code>${esc(e.hash.slice(0, 12))}…</code></td></tr>`).join("");
+}
+
+function showVerdict(t) {
+  $("#verdict").innerHTML = `<div class="verdict ${t.status}"><div class="t">${LABEL[t.status] || esc(t.status)}</div>
+    ${esc(t.merchant)} · ${money(t.amount)}<br><code>${esc(t.rule)}</code> ${esc(t.reason)}</div>`;
+}
+
+$("#form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("#send").disabled = true;
+  try {
+    const t = await api("/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      agent: $("#agent").value, merchant: $("#merchant").value, category: $("#category").value,
+      description: $("#description").value, amount: $("#amount").value, currency: $("#currency").value.toUpperCase() }) });
+    showVerdict(t); await refresh();
+  } catch (err) { $("#verdict").innerHTML = `<div class="verdict rejected"><div class="t">error</div>${esc(err.message)}</div>`; }
+  finally { $("#send").disabled = false; }
+});
+document.querySelector(".presets").addEventListener("click", (e) => {
+  const p = e.target.dataset?.p; if (!p) return;
+  const [m, c, d, a] = JSON.parse(p);
+  $("#merchant").value = m; $("#category").value = c; $("#description").value = d; $("#amount").value = a;
+  $("#form").requestSubmit();
+});
+$("#pending").addEventListener("click", async (e) => {
+  const { act, id } = e.target.dataset || {}; if (!act) return;
+  try {
+    const t = await api(`/transactions/${id}/${act}`, { method: "POST",
+      headers: { "Content-Type": "application/json", "X-Approver-Token": $("#tok").value },
+      body: JSON.stringify({ approver: "dashboard", note: act === "deny" ? "denied from dashboard" : "" }) });
+    showVerdict(t);
+  } catch (err) { $("#verdict").innerHTML = `<div class="verdict rejected"><div class="t">could not ${esc(act)}</div>${esc(err.message)}</div>`; }
+  await refresh();
+});
+$("#verify").addEventListener("click", async () => {
+  const r = await api("/audit/verify");
+  $("#chainRes").innerHTML = r.ok ? `<span class="res ok">chain intact · ${r.entries_checked} entries · head ${esc(r.head_hash.slice(0, 12))}…</span>`
+    : `<span class="res bad">BROKEN at entry #${r.bad_seq}: ${esc(r.problem)}</span>`;
+});
+refresh();
+</script>
+</body>
+</html>

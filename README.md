@@ -2,6 +2,12 @@
 
 A spending guard for AI agents. Every payment an agent proposes is auto-approved, sent to a human for confirmation, or hard-rejected, according to caps in a config file, and every step lands in a tamper-evident audit log. It runs locally for free.
 
+## Screenshot
+
+The dashboard at http://localhost:8000: propose a payment, watch the daily-cap meter, and approve or deny held payments (set `APPROVER_TOKEN` to enable that). Here the PyCon Europe payment is held for a human, and the 30.00 Lambda Cloud payment is **rejected** because the held amount already counts toward the daily cap. The audit chain verifies at the bottom.
+
+![The spend guard dashboard: daily-cap meter, a payment waiting for a human, a rejected payment, the transactions table and the hash-chained audit log](docs/screenshots/dashboard.png)
+
 ## What it does
 
 - **One config file sets the rules.** In `spend_policy.toml`:
@@ -36,6 +42,7 @@ A spending guard for AI agents. Every payment an agent proposes is auto-approved
   - The mock wallet (SQLite balance) is the default.
   - Stripe test mode is optional: it uses real PaymentIntents paid with Stripe test cards.
   - Live Stripe keys are refused.
+- **Web dashboard.** `GET /` shows the wallet, the daily-cap meter, held payments with approve and deny buttons, transactions and the audit log with a chain check.
 - **Demo agent.** The Groq LLM gets a shopping task and a `propose_payment` tool. It sees the guard's verdicts and adapts, but can't override them. Without a key, a scripted agent works through the same shopping list.
 
 ## Quickstart
@@ -64,7 +71,7 @@ The CLI demo asks you, the human, whether to approve the over-cap payment. Flags
 - `--tamper` edits the audit log afterwards to show the tampering being caught.
 - `--llm` uses the Groq agent (needs a key).
 
-Run the tests with `pytest`. There are 71 tests, and they need no API key and no network access.
+Run the tests with `pytest`. There are 72 tests, and they need no API key and no network access.
 
 ### Demo output (scripted agent, default policy)
 

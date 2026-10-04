@@ -66,3 +66,8 @@ def test_wallet_policy_audit_endpoints(client):
     assert events[:3] == ["executed", "auto_approved", "proposed"]
     assert client.get("/audit/verify").json()["ok"] is True
     assert client.get("/transactions", params={"status": "executed"}).json()[0]["amount"] == "20.00"
+
+
+def test_dashboard_page_is_served(client):
+    r = client.get("/")
+    assert r.status_code == 200 and "Agent" in r.text and "spend guard" in r.text
