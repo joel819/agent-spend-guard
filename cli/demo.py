@@ -62,7 +62,7 @@ def run(confirm_mode: str = "ask", use_llm: bool | None = None, tamper: bool = F
     use_llm = bool(s.groq_api_key) if use_llm is None else use_llm
     summary = None
     if use_llm:
-        console.print("\n[bold]Agent:[/] Groq LLM (llama-3.3-70b-versatile) with a propose_payment tool\n")
+        console.print(f"\n[bold]Agent:[/] Groq LLM ({s.groq_model}) with a propose_payment tool\n")
         try:
             log, summary = groq_agent.run(guard, confirm, s, before=before, after=after)
         except groq_agent.AgentError as exc:

@@ -61,7 +61,7 @@ def test_llm_agent_proposals_go_through_the_guard(guard, settings):
     assert [tx.status for _, tx in log.steps] == ["executed", "executed", "rejected"]
     assert len(asked) == 1  # only the over-cap payment went to the human
     assert "rejected" in summary
-    assert llm.requests[0]["model"] == "llama-3.3-70b-versatile"
+    assert llm.requests[0]["model"] == "openai/gpt-oss-120b"
     rejected_result = json.loads(llm.requests[2]["messages"][-1]["content"])
     assert rejected_result["status"] == "rejected" and "daily cap" in rejected_result["reason"]
 
@@ -85,3 +85,15 @@ def test_llm_bad_arguments_reported_back(guard, settings):
 def test_llm_failure_raises(guard, settings):
     with pytest.raises(groq_agent.AgentError):
         groq_agent.run(guard, lambda tx: True, settings, llm=FakeLLM(openai.APIConnectionError(request=None)))
+
+
+def test_llm_agent_is_told_how_a_human_decision_ended(guard, settings):
+    llm = FakeLLM(
+        reply(tool_calls=[call(item("PyCon", "149.00", "events"), "a")]),
+        reply("Ticket bought after a human confirmed it."),
+    )
+    groq_agent.run(guard, lambda tx: True, settings, llm=llm)
+    tool_msg = next(m for m in llm.requests[1]["messages"] if m["role"] == "tool")
+    result = json.loads(tool_msg["content"])
+    assert result["decided_by"] == "human:cli"
+    assert "A human reviewed this payment" in result["note"]

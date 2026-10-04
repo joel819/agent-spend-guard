@@ -1,7 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 from app.config import get_settings
 from app.db import init_db
@@ -9,6 +12,7 @@ from app.guard import get_guard
 from app.routers import audit, health, transactions, wallet
 
 log = logging.getLogger("uvicorn.error")
+STATIC = Path(__file__).parent / "static"
 
 
 @asynccontextmanager
@@ -34,4 +38,9 @@ def create_app() -> FastAPI:
                               "human confirmation over it, hard reject at the daily cap. Full audit log.")
     for r in (health.router, transactions.router, wallet.router, audit.router):
         app.include_router(r)
+
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(STATIC / "index.html")
+
     return app

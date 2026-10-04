@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # Demo agent (LLM)
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     agent_max_steps: int = 8
 
     @property
