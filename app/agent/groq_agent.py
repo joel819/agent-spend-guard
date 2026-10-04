@@ -1,4 +1,4 @@
-"""LLM procurement agent (Llama 3.3 70B on Groq). It is given a task and one tool,
+"""LLM procurement agent (Groq, OpenAI-compatible API). It is given a task and one tool,
 propose_payment. Every call goes through the guard; the guard's verdict comes back as the
 tool result, so the agent sees rejections and can adapt, but can never override them."""
 import json
@@ -75,5 +75,9 @@ def _handle(guard: Guard, confirm: ConfirmFn, call, log: RunLog, before=None, af
         return {"error": f"invalid arguments: {exc}"}
     except GuardError as exc:
         return {"error": exc.message}
-    return {"status": tx.status, "amount": str(from_cents(tx.amount_cents)), "reason": tx.reason,
-            "decided_by": tx.decided_by, "failure": tx.failure}
+    result = {"status": tx.status, "amount": str(from_cents(tx.amount_cents)), "reason": tx.reason,
+              "decided_by": tx.decided_by, "failure": tx.failure}
+    if tx.decided_by and tx.decided_by.startswith("human:"):
+        # "reason" still names the rule that asked for confirmation; say plainly how it ended.
+        result["note"] = f"A human reviewed this payment: final status is {tx.status}."
+    return result

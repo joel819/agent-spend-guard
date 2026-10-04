@@ -64,7 +64,7 @@ The CLI demo asks you, the human, whether to approve the over-cap payment. Flags
 - `--tamper` edits the audit log afterwards to show the tampering being caught.
 - `--llm` uses the Groq agent (needs a key).
 
-Run the tests with `pytest`. There are 70 tests, and they need no API key and no network access.
+Run the tests with `pytest`. There are 71 tests, and they need no API key and no network access.
 
 ### Demo output (scripted agent, default policy)
 
@@ -92,6 +92,46 @@ Audit chain verified: 13 entries intact.
 
 Tamper test: rewriting the amount in audit entry #8 directly in SQLite...
 Audit chain BROKEN at entry #8: entry 8 was modified after it was written
+```
+
+### Demo output (LLM agent)
+
+The same demo with a Groq key (`python -m cli demo --llm --yes`). The model proposes each payment through the one tool it has, sees the guard's verdict, and writes the summary from those verdicts. The fourth payment is rejected by the daily cap, and the agent can't override it:
+
+```
+Agent: Groq LLM (openai/gpt-oss-120b) with a propose_payment tool
+
+1. groq-agent proposes Groq, 20.00 EUR
+  APPROVED  Groq: Groq Cloud API credits top-up, 20.00 EUR
+  within_caps: 20.00 EUR is within the per-transaction cap; 180.00 EUR left today.
+
+2. groq-agent proposes Namecheap, 12.99 EUR
+  APPROVED  Namecheap: Domain renewal for agent-demo.dev at Namecheap, 12.99 EUR
+  within_caps: 12.99 EUR is within the per-transaction cap; 167.01 EUR left today.
+
+3. groq-agent proposes PyCon Europe, 149.00 EUR
+  NEEDS CONFIRMATION  PyCon Europe: One-day PyCon Europe conference ticket, 149.00 EUR
+  149.00 EUR is over the per-transaction cap of 50.00 EUR; a human must confirm it.
+  Human confirmation: approve (--yes)
+  APPROVED (confirmed by human:cli)  PyCon Europe: One-day PyCon Europe conference ticket, 149.00 EUR
+  per_transaction_cap: 149.00 EUR is over the per-transaction cap of 50.00 EUR; a human must confirm it.
+
+4. groq-agent proposes Lambda Cloud, 30.00 EUR
+  REJECTED  Lambda Cloud: GPU hours at Lambda Cloud for fine-tuning, 30.00 EUR
+  daily_cap: 30.00 EUR would bring today's spend to 211.99 EUR, over the daily cap of 200.00 EUR (18.01 EUR left today). The daily
+cap cannot be overridden.
+
+
+Spent or held today: 181.99 EUR of 200.00 EUR   remaining: 18.01 EUR   wallet balance: 4,818.01 EUR
+╭─ Agent's summary ──────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ **Purchased**                                                                                                                  │
+│ - Groq Cloud API credits top‑up – €20.00 (software) – approved.                                                                │
+│ - Domain renewal at Namecheap – €12.99 (software) – approved.                                                                  │
+│ - PyCon Europe one‑day ticket – €149.00 (events) – approved after human confirmation.                                          │
+│                                                                                                                                │
+│ **Not purchased**                                                                                                              │
+│ - GPU hours at Lambda Cloud – €30.00 (compute) – rejected because it would exceed the daily spending cap of €200.00.           │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Operator commands (main database, shared with the API)
